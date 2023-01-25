@@ -1,4 +1,3 @@
-
 import { debug, sleep } from './util.js'
 import YBMClient from './ybm-client.js'
 
@@ -8,6 +7,11 @@ const config = {
   apiKey: process.env.YBM_API_KEY,
   postUpdateQueryRetry: process.env.YBM_POST_UPDATE_QUERY_RETRY || 30
 }
+assert(config.apiKey, 'API key not set (YBM_API_KEY)')
+assert(config.accountId, 'Account ID not set (YBM_ACCOUNT_ID)')
+assert(config.accountId, 'Project ID not set (YBM_PROJECT_ID)')
+
+const ybm = new YBMClient(config.apiKey, config.accountId, config.projectId)
 
 /*
 Basic Idea:
@@ -32,14 +36,20 @@ export async function update (prefix, cidrOrIpList, clusterId = null) {
   const prefixRegex = new RegExp(`^${prefix}--v(\\d+)$`)
 
   let nextNumber = 1
-  let newAllowList = Array.isArray(cidrOrIpList) ? cidrOrIpList : [cidrOrIpList]
+  let newAllowList = Array.isArray(cidrOrIpList)
+    ? cidrOrIpList
+    : [cidrOrIpList]
   let latestAllowList
   let clusterIds = clusterId !== null ? [clusterId] : []
-  debug(`Update allow list with prefix ${prefix} to include cidr ${newAllowList.join(',')}`)
+  debug(
+    `Update allow list with prefix ${prefix} to include cidr ${newAllowList.join(
+      ','
+    )}`
+  )
 
   let existingLists = await getAllowListByName(prefixRegex)
 
-  const existingListIds = existingLists.map(x => x.info.id).sort()
+  const existingListIds = existingLists.map((x) => x.info.id).sort()
   if (Array.isArray(existingLists) && existingLists.length > 0) {
     debug('Found existing allow list with prefix')
     existingLists = existingLists.sort((a, b) => {
@@ -50,39 +60,65 @@ export async function update (prefix, cidrOrIpList, clusterId = null) {
     })
 
     latestAllowList = existingLists[0]
-    debug(`Latest allow list: id: ${latestAllowList.info.id}, name: ${latestAllowList.spec.name}`)
-    const clusterIdPresent = clusterId === null || latestAllowList.info.cluster_ids.includes(clusterId)
-    const allCidrsPresent = newAllowList.every(x => latestAllowList.spec.allow_list.includes(x))
+    debug(
+      `Latest allow list: id: ${latestAllowList.info.id}, name: ${latestAllowList.spec.name}`
+    )
+    const clusterIdPresent =
+      clusterId === null ||
+      latestAllowList.info.cluster_ids.includes(clusterId)
+    const allCidrsPresent = newAllowList.every((x) =>
+      latestAllowList.spec.allow_list.includes(x)
+    )
     if (clusterIdPresent && allCidrsPresent) {
-      debug(`Skipping updated all as cluster (${clusterId}) and CIDRs (${newAllowList.join(',')}) present`)
+      debug(
+        `Skipping updated all as cluster (${clusterId}) and CIDRs (${newAllowList.join(
+          ','
+        )}) present`
+      )
       return latestAllowList
     }
     clusterIds = clusterIds.concat(latestAllowList.info.cluster_ids)
     nextNumber = ++prefixRegex.exec(latestAllowList.spec.name)[1]
-    newAllowList = newAllowList.concat(latestAllowList.spec.allow_list).sort()
+    newAllowList = newAllowList
+      .concat(latestAllowList.spec.allow_list)
+      .sort()
       .filter((v, i, a) => a.indexOf(v) === i) // uniq element trick
   }
 
   const name = `${prefix}--v${nextNumber}`
   const description = `Allow list for ${newAllowList.join(',')}`
 
-  debug(`Create a new allow list: name: ${name}, description: ${description}, allow list: ${newAllowList.join(',')}`)
+  debug(
+    `Create a new allow list: name: ${name}, description: ${description}, allow list: ${newAllowList.join(
+      ','
+    )}`
+  )
   const updatedList = await createAllowList(name, description, newAllowList)
   const updatedListId = updatedList.info.id
 
   debug(`Created allow list: id: ${updatedListId}`)
-  const updatedClusterAllowLists = await Promise.all(clusterIds.map(async (id) => {
-    const currentClusterAllowListIds = await getClusterAllowListIds(id)
-    const updatedClusterAllowListIds = currentClusterAllowListIds.filter(x => existingListIds.indexOf(x) === -1)
-    updatedClusterAllowListIds.push(updatedListId)
-    debug(`Update allow list for cluster (${id}) to (${updatedClusterAllowListIds.join(',')})`)
-    return await updateClusterAllowLists(id, updatedClusterAllowListIds)
-  }))
-  debug(`Clusters (${clusterIds.join(',')} (responses: ${updatedClusterAllowLists.length}))`)
+  const updatedClusterAllowLists = await Promise.all(
+    clusterIds.map(async (id) => {
+      const currentClusterAllowListIds = await getClusterAllowListIds(id)
+      const updatedClusterAllowListIds = currentClusterAllowListIds.filter(
+        (x) => existingListIds.indexOf(x) === -1
+      )
+      updatedClusterAllowListIds.push(updatedListId)
+      debug(
+        `Update allow list for cluster (${id}) to (${updatedClusterAllowListIds.join(
+          ','
+        )})`
+      )
+      return await updateClusterAllowLists(id, updatedClusterAllowListIds)
+    })
+  )
+  debug(
+    `Clusters (${clusterIds.join(',')} (responses: ${
+      updatedClusterAllowLists.length
+    }))`
+  )
   return await getAllowList(updatedListId)
 }
-
-const ybm = new YBMClient(config.apiKey, config.accountId, config.projectId)
 
 async function getAllowListByName (regex) {
   const path = '/allow-lists'
@@ -93,8 +129,14 @@ async function getAllowListByName (regex) {
   }
 
   const response = await ybm.get(path, params)
-  const filteredList = response.data.filter(x => regex.test(x.spec.name))
-  debug({ _tag: 'debug', _method: 'getAllowListByName', arguments, filteredList, ...response })
+  const filteredList = response.data.filter((x) => regex.test(x.spec.name))
+  debug({
+    _tag: 'debug',
+    _method: 'getAllowListByName',
+    arguments,
+    filteredList,
+    ...response
+  })
   return filteredList
 }
 
@@ -102,16 +144,20 @@ async function getClusterAllowListIds (id) {
   debug(`getClusterAllowListIds - Fetch allow list ids for cluster (${id})`)
   const path = `/clusters/${id}/allow-lists`
   const response = await ybm.get(path)
-  if (response.error !== null) {
-    console.warn(`Encountered error in get allow lists : ${response.error.status} -> ${response.error.details}`)
+  if (response.error) {
+    console.warn(
+      'Encountered error in get allow lists: ' + errorDetails(response)
+    )
     return null
   }
-  return response.data.map(x => x.info.id).sort()
+  return response.data.map((x) => x.info.id).sort()
 }
 
 async function createAllowList (name, description, cidrOrIpList) {
   const allowList = Array.isArray(cidrOrIpList) ? cidrOrIpList : [cidrOrIpList]
-  debug(`createAllowList - name: ${name}, desc: ${description}, allowList: ${allowList}`)
+  debug(
+    `createAllowList - name: ${name}, desc: ${description}, allowList: ${allowList}`
+  )
   const path = '/allow-lists'
   const body = {
     name,
@@ -119,14 +165,21 @@ async function createAllowList (name, description, cidrOrIpList) {
     allow_list: allowList
   }
   const response = await ybm.post(path, body)
-  if (response &&
+  if (
+    response &&
     response.data &&
     response.data.spec &&
     response.data.info &&
-    response.data.info.id) {
+    response.data.info.id
+  ) {
     return response.data
   }
-  debug({ _tag: 'error', _method: 'createAllowList', _msg: 'Error to create list', ...response })
+  debug({
+    _tag: 'error',
+    _method: 'createAllowList',
+    _msg: 'Error to create list',
+    ...response
+  })
   throw new Error('Failed to create allow list')
 }
 
@@ -140,25 +193,45 @@ async function updateClusterAllowLists (clusterId, allowListIds) {
     if (response.data) {
       break
     }
-    if (response.error !== null) {
-      console.warn(`Encountered error in update : ${response.error.status} -> ${response.error.details}`)
+    if (response.error) {
+      console.warn(
+        'Encountered error in update :' + errorDetails(response)
+      )
     }
     sleep(1)
   }
   retry = config.postUpdateQueryRetry
   while (--retry > 0) {
     const ids = await getClusterAllowListIds(clusterId)
-    if (ids != null && allowListIds.every(x => ids.includes(x))) {
+    if (ids != null && allowListIds.every((x) => ids.includes(x))) {
       return ids
     }
     sleep(1)
   }
-  debug({ _tag: 'error', _method: 'updateClusterAllowLists', _msg: 'updateClusterAllowLists' })
-  throw new Error(`Failed update:  cluster(${clusterId}), allow lists:(${param})`)
+  debug({
+    _tag: 'error',
+    _method: 'updateClusterAllowLists',
+    _msg: 'updateClusterAllowLists'
+  })
+  throw new Error(
+    `Failed update:  cluster(${clusterId}), allow lists:(${param})`
+  )
 }
 
 async function getAllowList (id) {
   const path = `/allow-lists/${id}`
   const response = await ybm.get(path, {})
   return response.data
+}
+function assert (x, error) {
+  if (typeof x === 'undefined' || x === null) {
+    throw new Error(error)
+  }
+}
+function errorDetails (res) {
+  if (res && res.error && res.error.status && res.error.detaiils) {
+    return `${res.error.status} - ${res.error.details}`
+  } else {
+    return JSON.stringify(res)
+  }
 }
