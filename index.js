@@ -1,5 +1,7 @@
 import YBMClient from './ybm-client'
 
+import { inspect } from 'node:util'
+
 const config = {
   accountId: process.env.YBM_ACCOUNT_ID,
   projectId: process.env.YBM_PROJECT_ID,
@@ -27,7 +29,7 @@ Update allow list association for each of the cluster associated with latest all
 
 */
 export async function update (prefix, cidrOrIpList, clusterId = null) {
-  const prefixRegex = new RegExp(`^${prefix}--v(\\d+)\\$`)
+  const prefixRegex = new RegExp(`^${prefix}--v(\\d+)$`)
 
   let nextNumber = 1
   let newAllowList = Array.isArray(cidrOrIpList) ? cidrOrIpList : [cidrOrIpList]
@@ -66,7 +68,7 @@ export async function update (prefix, cidrOrIpList, clusterId = null) {
 
   console.info(`Create a new allow list: name: ${name}, description: ${description}, allow list: ${newAllowList.join(',')}`)
   const updatedList = await createAllowList(name, description, newAllowList)
-  const updatedListId = updatedList.data.info.id
+  const updatedListId = updatedList.info.id
 
   console.info(`Created allow list: id: ${updatedListId}`)
   const updatedClusterAllowLists = await Promise.all(clusterIds.map(async (id) => {
@@ -91,7 +93,9 @@ async function getAllowListByName (regex) {
   }
 
   const response = await ybm.get(path, params)
-  return response.data.filter(x => regex.test(x.spec.name))
+  const filteredList = response.data.filter(x => regex.test(x.spec.name))
+  debug({ _tag: 'debug', _method: 'getAllowListByName', arguments, filteredList, ...response })
+  return filteredList
 }
 
 async function getClusterAllowListIds (id) {
@@ -110,13 +114,26 @@ async function createAllowList (name, description, cidrOrIpList) {
     description,
     allow_list: allowList
   }
-  return ybm.post(path, body)
+  const response = await ybm.post(path, body)
+  if (response &&
+    response.data &&
+    response.data.spec &&
+    response.data.info &&
+    response.data.info.id) {
+    return response.data
+  }
+  debug({ _tag: 'error', _method: 'createAllowList', _msg: 'Error to create list', ...response })
+  throw new Error('Failed to create allow list')
 }
 
 async function updateClusterAllowLists (clusterId, allowListIds) {
   const path = `/clusters/${clusterId}/allow-lists`
   const param = allowListIds.sort()
   const response = await ybm.put(path, param)
+  if (!(response && response.data && Array.isArray(response.data))) {
+    debug({ _tag: 'error', _method: 'updateClusterAllowLists', _msg: 'Updating cluster allow list ', ...response })
+    throw new Error(`Failed to update cluster (${clusterId}) with allow list (${allowListIds.join(',')})`)
+  }
   let updatedAllowListIds = response.data.map(x => x.info.id).sort()
   /*
   Actual update take a few seconds to go through, so we need to check the response
@@ -140,7 +157,7 @@ async function updateClusterAllowLists (clusterId, allowListIds) {
     }
     ++retry
   }
-  console.error('updateClusterAllowLists - exhausted retries')
+  console.error({ _tag: 'error', _method: 'updateClusterAllowLists', _msg: 'updateClusterAllowLists', ...response })
   throw new Error(`Update allow list (${param}) failed for cluster (${clusterId})`)
 }
 
@@ -152,4 +169,11 @@ async function getAllowList (id) {
 
 async function sleep (seconds) {
   return await new Promise((resolve, reject) => { setTimeout(resolve, seconds * 1000) })
+}
+
+function debug (obj) {
+  if (process.env.NODE_ENV !== 'development') {
+    return
+  }
+  console.debug(inspect(obj, false, 3, true))
 }
