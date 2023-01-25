@@ -1,6 +1,6 @@
 {
   "name": "ybm-allow-list-management",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Module to update Allow List on YugabyteDB Managed (SaaS) dynamicallynpm install --save-dev babel-jest",
   "main": "index.js",
   "scripts": {
@@ -8,7 +8,7 @@
     "test": "NODE_OPTIONS=--experimental-vm-modules jest --runInBand",
     "analyse": "npx eslint './**/*.js'",
     "analyze": "npm run analyse",
-    "pub" : "npm version patch --force && npm publish --access public"
+    "pub": "npm version patch --force && npm publish --access public"
   },
   "keywords": [],
   "author": {
