@@ -10,3 +10,6 @@ node_modules/
 .vscode/
 index.test.js
 README.md
+.node-version
+*.tgz
+*.log
