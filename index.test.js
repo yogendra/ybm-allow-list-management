@@ -9,6 +9,7 @@ import { jest, expect, describe, test, beforeAll, afterAll } from '@jest/globals
 import { update } from '.'
 import YBMClient from './ybm-client'
 import { sleep } from './sleep'
+import { debug } from './logging'
 
 jest.setTimeout(600000)
 
@@ -23,7 +24,7 @@ const testConfig = {
   endpoint: process.env.YBM_ENDPOINT
 }
 
-describe('Update Allow List Usage', () => {
+describe('Updte Allow List', () => {
   let u1, u2, u3, u4
 
   beforeAll(async () => {
@@ -33,17 +34,17 @@ describe('Update Allow List Usage', () => {
     await deleteTestData()
   })
 
-  test('Create a new allow list with cluster id', async () => {
+  test('Create new', async () => {
     // Create new list v1
     u1 = await update(testConfig.prefix, '127.0.0.1/32', testConfig.clusterId)
-    console.debug(JSON.stringify(u1))
+    debug(JSON.stringify(u1))
     expect(u1.info.id).toBeDefined()
     expect(u1.info.cluster_ids.includes(testConfig.clusterId)).toBeTruthy()
     expect(u1.spec.name).toEqual(testConfig.prefix + '--v1')
     expect(u1.spec.allow_list.includes('127.0.0.1/32'))
   })
 
-  test('Update an existing list with IP', async () => {
+  test('Update IP', async () => {
     // Update list, new version, copy over associations
     u2 = await update(testConfig.prefix, '127.0.0.2/32')
     expect(u2.info.id).toBeDefined()
@@ -53,7 +54,7 @@ describe('Update Allow List Usage', () => {
     expect(u2.spec.allow_list.includes('127.0.0.2/32'))
   })
 
-  test('Update an existing list with existing IP (no-op)', async () => {
+  test('Update duplicate IP (no-op)', async () => {
     // Skip duplicate updates
     u3 = await update(testConfig.prefix, '127.0.0.2/32')
     expect(u3.info.id).toBeDefined()
@@ -64,7 +65,7 @@ describe('Update Allow List Usage', () => {
     expect(u3.spec.allow_list.includes('127.0.0.2/32'))
   })
 
-  test('Update an existing list with new IP', async () => {
+  test('Update new IP', async () => {
     //
     u4 = await update(testConfig.prefix, '127.0.0.3/32')
     expect(u4.info.id !== u3.info.id).toBeTruthy()
