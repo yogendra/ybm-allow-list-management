@@ -1,5 +1,7 @@
 # YugabyteDB Managed - Allow List Management
 
+[![Build](https://github.com/yogendra/ybm-allow-list-management/actions/workflows/build.yaml/badge.svg)](https://github.com/yogendra/ybm-allow-list-management/actions/workflows/build.yaml)
+
 This module can help in dynamically updating allow list in case of serverless /
 PaaS environments where egress IPs are dynamic.
 
