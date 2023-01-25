@@ -6,10 +6,10 @@ import { jest, expect, describe, test, beforeAll, afterAll } from '@jest/globals
  * 2. Set Env vars : YBM_API_KEY, YBM_PROJECT_ID, YBM_ACCOUNT_ID, YBM_CLUSTER_ID
  */
 
-import { update } from '.'
-import YBMClient from './ybm-client'
-import { sleep } from './sleep'
-import { debug } from './logging'
+import { update } from './index.js'
+import YBMClient from './ybm-client.js'
+import { sleep } from './sleep.js'
+import { debug } from './logging.js'
 
 jest.setTimeout(600000)
 

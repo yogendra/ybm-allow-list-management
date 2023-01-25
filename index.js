@@ -1,5 +1,5 @@
-import { debug } from './logging'
-import YBMClient from './ybm-client'
+import { debug } from './logging.js'
+import YBMClient from './ybm-client.js'
 
 const config = {
   accountId: process.env.YBM_ACCOUNT_ID,
