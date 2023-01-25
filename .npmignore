@@ -1,0 +1,7 @@
+.eslintrc.json
+.envrc
+.github/
+.gitignore
+.vscode/
+index.test.js
+README.md
