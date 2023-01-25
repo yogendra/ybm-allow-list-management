@@ -7,7 +7,8 @@
     "debug-test": "NODE_OPTIONS='--experimental-vm-modules --inspect-brk' jest --runInBand ",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest --runInBand",
     "analyse": "npx eslint './**/*.js'",
-    "analyze": "npm run analyse"
+    "analyze": "npm run analyse",
+    "pub" : "npm version patch --force && npm publish"
   },
   "keywords": [],
   "author": {
