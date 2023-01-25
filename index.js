@@ -5,7 +5,8 @@ const config = {
   accountId: process.env.YBM_ACCOUNT_ID,
   projectId: process.env.YBM_PROJECT_ID,
   apiKey: process.env.YBM_API_KEY,
-  postUpdateQueryRetry: process.env.YBM_POST_UPDATE_QUERY_RETRY || 30
+  maxRetry: process.env.YBM_MAX_RETRY || 30,
+  retryInterval: process.env.YBM_RETRY_INTERVAL || 2
 }
 assert(config.apiKey, 'API key not set (YBM_API_KEY)')
 assert(config.accountId, 'Account ID not set (YBM_ACCOUNT_ID)')
@@ -186,7 +187,7 @@ async function createAllowList (name, description, cidrOrIpList) {
 async function updateClusterAllowLists (clusterId, allowListIds) {
   const path = `/clusters/${clusterId}/allow-lists`
   const param = allowListIds.sort()
-  let retry = config.postUpdateQueryRetry
+  let retry = config.maxRetry
 
   while (--retry > 0) {
     const response = await ybm.put(path, param)
@@ -198,9 +199,9 @@ async function updateClusterAllowLists (clusterId, allowListIds) {
         'Encountered error in update :' + errorDetails(response)
       )
     }
-    await sleep(2)
+    await sleep(config.retryInterval)
   }
-  retry = config.postUpdateQueryRetry
+  retry = config.maxRetry
   while (--retry > 0) {
     const ids = await getClusterAllowListIds(clusterId)
     if (ids && allowListIds.every((x) => ids.includes(x))) {
@@ -210,7 +211,7 @@ async function updateClusterAllowLists (clusterId, allowListIds) {
       'Cluster allow list update not completed :' + ids.join(',')
     )
 
-    await sleep(1)
+    await sleep(config.retryInterval)
   }
   debug({
     _tag: 'error',
