@@ -1,4 +1,4 @@
-import { debug } from './logging.js'
+import { debug } from './util.js'
 
 export default class YBMClient {
   constructor (apiKey, accountId, projectId, endpoint) {
