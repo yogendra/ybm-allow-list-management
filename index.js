@@ -229,8 +229,8 @@ function assert (x, error) {
   }
 }
 function errorDetails (res) {
-  if (res && res.error && res.error.status && res.error.detaiils) {
-    return `${res.error.status} - ${res.error.details}`
+  if (res && res.error && res.error.status && res.error.detail) {
+    return `${res.error.status} - ${res.error.detail}`
   } else {
     return JSON.stringify(res)
   }
