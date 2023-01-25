@@ -8,27 +8,59 @@ This is developed particularly to support accessing
 [YBM APIs](https://api-docs.yugabyte.com/docs/managed-apis) to update the
 network allow list at runtime
 
-# Example
+## Features
+
+1. Create versioned allow list
+2. Easy to override or configure manually, just follow the naming conventions
+3. Create new version on each run
+4. Skips version creations on duplicate updates
+5. Dis-associated old version from cluster.
+6. Keeps existing association from older version
+
+## Example
 
 ```js
-// TBA
+// Make sure YBM_API_KEY. YBM_PROJECT_ID and YBM_ACCOUNT_ID are defined in the environment
+import { update } from "ybm-allow-list-management";
+let prefix = "myapp-allow-list"
+// Find your apps egress IP
+let egressIp = await fetch("https://ifconfig.me/ip",)
+  .then(res => {
+    return res.text();
+  })
+  .then(ipAddress => `${ipAddress}/32`);
+// Get it from the YBM console address bar
+let clusterId = '<cluster-uuid>'
+
+console.log("Egress IP: " + egressIp);
+
+let allowList = await update(prefix, egressIp, clusterId);
+console.log("Allow list name " + allowList.spec.name);
 ```
 
-## Test Commands
+Code above will go create an allow list with prefix `myapp-allow-list`. If there is any existing list matching
+`myapp-allow-list--v#` format, it will create new list by addin `+1` to version. It will copy over existing
+ip addresses and cluster ids from older version.
 
-Add following environment variables:
+## Environment Variables
 
-- `YBM_API_KEY` - YugabyteDB Managed - Api Key
-- `YBM_ENDPOINT` - YugabyteDB Managed - Endpoint URL [https://cloud.yugabyte.com/api]
-- `YBM_ACCOUNT_ID` - YugabyteDB Managed - Account ID
-- `YBM_PROJECT_ID` - YugabyteDB Managed - Project ID
-- `YBM_CLUSTER_ID` - YugabyteDB Managed - Cluster ID  (testing only)
+Following environment variables are used by this module
 
-```bash
+- `YBM_API_KEY` - (**Required**) YugabyteDB Managed - Api Key
+- `YBM_ACCOUNT_ID` - (**Required**) YugabyteDB Managed - Account ID
+- `YBM_PROJECT_ID` - (**Required**) YugabyteDB Managed - Project ID
+- `YBM_ENDPOINT` - (_Optional_) YugabyteDB Managed - Endpoint URL (Default: `https://cloud.yugabyte.com/api`)
+- `YBM_MAX_RETRY` - (_Optional_) Maximum retry for api requests (Default : `30`)
+- `YBM_RETRY_INTERVAL` - (_Optional_) Internal (seconds) between api requests (Default : `2`)
+- `YBM_CLUSTER_ID` - (_Test Only_) YugabyteDB Managed - Cluster ID
+- `YBM_ALLOW_LIST_PREFIX` - (_Test Only_) Prefix for allow list name
+- `NODE_ENV` - (_Test Only_) Set to `development` for debug logs
 
-curl --request PUT \
-      --url "$YBM_ENDPOINT/public/v1/accounts/$YBM_ACCOUNT_ID/projects/$YBM_PROJECT_ID/clusters/$YBM_CLUSTER_ID/allow-lists" \
-      --header "Authorization: Bearer $YBM_API_KEY" \
-      --header 'Content-Type: application/json' \
-      --data '["08ba2e01-2ae6-4aa1-b13a-1c9c7ada3383","72f2ebc5-45a8-45ac-bd8a-fcc25b315aa9","89f94942-cd7a-4ece-a46b-498ede1cffab"]'
-```
+## Develop
+
+_TBA_
+
+
+## Get in Touch
+
+Get in touch via [YugabyteDB Community Slack](https://yugabyte.com/slack)
