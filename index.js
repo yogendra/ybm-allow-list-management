@@ -186,7 +186,7 @@ async function createAllowList (name, description, cidrOrIpList) {
 async function updateClusterAllowLists (clusterId, allowListIds) {
   const path = `/clusters/${clusterId}/allow-lists`
   const param = allowListIds.sort()
-  let retry = 10
+  let retry = config.postUpdateQueryRetry
 
   while (--retry > 0) {
     const response = await ybm.put(path, param)
