@@ -102,8 +102,8 @@ async function getClusterAllowListIds (id) {
   debug(`getClusterAllowListIds - Fetch allow list ids for cluster (${id})`)
   const path = `/clusters/${id}/allow-lists`
   const response = await ybm.get(path)
-  if (response.error) {
-    console.warn(`Encountered error in get allow lists : ${response.status} -> ${response.details}`)
+  if (response.error !== null) {
+    console.warn(`Encountered error in get allow lists : ${response.error.status} -> ${response.error.details}`)
     return null
   }
   return response.data.map(x => x.info.id).sort()
@@ -140,8 +140,8 @@ async function updateClusterAllowLists (clusterId, allowListIds) {
     if (response.data) {
       break
     }
-    if (response.error != null) {
-      console.warn(`Encountered error in update : ${response.status} -> ${response.details}`)
+    if (response.error !== null) {
+      console.warn(`Encountered error in update : ${response.error.status} -> ${response.error.details}`)
     }
     sleep(1)
   }
