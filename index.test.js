@@ -20,7 +20,9 @@ const testConfig = {
   accountId: process.env.YBM_ACCOUNT_ID,
   projectId: process.env.YBM_PROJECT_ID,
   apiKey: process.env.YBM_API_KEY,
-  endpoint: process.env.YBM_ENDPOINT
+  endpoint: process.env.YBM_ENDPOINT,
+  maxRetry: process.env.YBM_MAX_RETRY || 30,
+  retryInterval: process.env.YBM_RETRY_INTERVAL || 2
 }
 
 describe('Updte Allow List', () => {
@@ -94,7 +96,7 @@ async function deleteTestData () {
       const updateAllowListIds = currentList
         .filter(x => !testAllowListIds.includes(x.info.id))
         .map(x => x.info.id)
-      let retry = 10
+      let retry = testConfig.maxRetry
       while (--retry > 0) {
         const update = await ybm.put(`/clusters/${clusterId}/allow-lists`, updateAllowListIds)
         if (update.error) {
@@ -103,9 +105,9 @@ async function deleteTestData () {
         if (update.data) {
           break
         }
-        await sleep(1)
+        await sleep(testConfig.retryInterval)
       }
-      retry = 10
+      retry = testConfig.maxRetry
       while (--retry > 0) {
         const update = await ybm.get(`/clusters/${clusterId}/allow-lists`)
         const updateIds = update.data.map(x => x.info.id)
@@ -113,7 +115,7 @@ async function deleteTestData () {
         if (updateCompleted) {
           break
         }
-        await sleep(1)
+        await sleep(testConfig.retryInterval)
       }
       return true
     })
