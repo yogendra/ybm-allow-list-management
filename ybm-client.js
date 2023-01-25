@@ -20,7 +20,7 @@ export default class YBMClient {
       method,
       body: body !== null ? JSON.stringify(body) : null
     }
-
+    debug({ _tag: 'info', _method: 'ybm.request', url, options })
     return fetch(url, options)
       .catch((x) => {
         console.error(`YBM API: ${path}, error: ${x}}`)
@@ -31,12 +31,23 @@ export default class YBMClient {
         if (contentType && contentType.indexOf('application/json') !== -1) {
           return response.json()
         } else {
+          const bodyText = await response.text()
+          if (method === 'DELETE' && bodyText === '') {
+            return {}
+          }
+          const errorInfo = {
+            req: { url, method, param, body, headers },
+            res: {
+              type: contentType,
+              body: bodyText
+            }
+          }
           debug({
-            req: { url, options },
-            res: { contentType },
-            _tag: 'ybm-request'
+            _tag: 'error',
+            _method: 'ybm.request',
+            errorInfo
           })
-          return response
+          throw new Error('Non JSON Response')
         }
       })
   }
