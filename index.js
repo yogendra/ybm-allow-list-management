@@ -198,15 +198,19 @@ async function updateClusterAllowLists (clusterId, allowListIds) {
         'Encountered error in update :' + errorDetails(response)
       )
     }
-    sleep(1)
+    await sleep(2)
   }
   retry = config.postUpdateQueryRetry
   while (--retry > 0) {
     const ids = await getClusterAllowListIds(clusterId)
-    if (ids != null && allowListIds.every((x) => ids.includes(x))) {
+    if (ids && allowListIds.every((x) => ids.includes(x))) {
       return ids
     }
-    sleep(1)
+    console.warn(
+      'Cluster allow list update not completed :' + ids.join(',')
+    )
+
+    await sleep(1)
   }
   debug({
     _tag: 'error',
