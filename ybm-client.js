@@ -1,3 +1,5 @@
+import { debug } from './logging'
+
 export default class YBMClient {
   constructor (apiKey, accountId, projectId, endpoint) {
     const ep = endpoint || 'https://cloud.yugabyte.com/api'
@@ -22,14 +24,14 @@ export default class YBMClient {
     return fetch(url, options)
       .catch((x) => {
         console.error(`YBM API: ${path}, error: ${x}}`)
-        throw x
+        throw new Error(x)
       })
       .then(async (response) => {
         const contentType = response.headers.get('content-type')
         if (contentType && contentType.indexOf('application/json') !== -1) {
           return response.json()
         } else {
-          console.debug({
+          debug({
             req: { url, options },
             res: { contentType },
             _tag: 'ybm-request'
