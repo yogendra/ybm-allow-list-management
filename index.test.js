@@ -8,8 +8,7 @@ import { jest, expect, describe, test, beforeAll, afterAll } from '@jest/globals
 
 import { update } from './index.js'
 import YBMClient from './ybm-client.js'
-import { sleep } from './sleep.js'
-import { debug } from './logging.js'
+import { sleep, debug } from './util.js'
 
 jest.setTimeout(600000)
 
@@ -25,14 +24,17 @@ const testConfig = {
 }
 
 describe('Updte Allow List', () => {
-  let u1, u2, u3, u4
-
   beforeAll(async () => {
     await deleteTestData()
   })
   afterAll(async () => {
     await deleteTestData()
   })
+
+  test('clean test start', () => {
+    expect(true).toBeTruthy()
+  })
+  let u1, u2, u3, u4
 
   test('Create new', async () => {
     // Create new list v1
@@ -92,18 +94,28 @@ async function deleteTestData () {
       const updateAllowListIds = currentList
         .filter(x => !testAllowListIds.includes(x.info.id))
         .map(x => x.info.id)
-      let update = await ybm.put(`/clusters/${clusterId}/allow-lists`, updateAllowListIds)
-      let updateIds = update.data.map(x => x.info.id)
-      let updateCompleted = testAllowListIds.every(x => !updateIds.includes(x))
-      let retry = 30
-      while (!updateCompleted && retry > 0) {
+      let retry = 10
+      while (--retry > 0) {
+        const update = await ybm.put(`/clusters/${clusterId}/allow-lists`, updateAllowListIds)
+        if (update.error) {
+          console.warn(`Update List Failed: ${update.error.status} - ${update.error.detail}`)
+        }
+        if (update.data) {
+          break
+        }
         await sleep(1)
-        update = await ybm.get(`/clusters/${clusterId}/allow-lists`)
-        updateIds = update.data.map(x => x.info.id)
-        updateCompleted = testAllowListIds.every(x => !updateIds.includes(x))
-        --retry
       }
-      return update
+      retry = 10
+      while (--retry > 0) {
+        const update = await ybm.get(`/clusters/${clusterId}/allow-lists`)
+        const updateIds = update.data.map(x => x.info.id)
+        const updateCompleted = testAllowListIds.every(x => !updateIds.includes(x))
+        if (updateCompleted) {
+          break
+        }
+        await sleep(1)
+      }
+      return true
     })
 
   await Promise.all(clusterUpdates)
