@@ -21,9 +21,12 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-      - run: npm ci
-      - run: npm run build --if-present
-      - run: npm test
+      - name: Fetch Dependencies
+        run: npm ci
+      - name: Build
+        run: npm run build --if-present
+      - name: Test
+        run: npm test
         env:
           YBM_ALLOWLIST_PREFIX: ${{ secrets.YBM_ALLOWLIST_PREFIX }}
           YBM_API_KEY: ${{ secrets.YBM_API_KEY }}
@@ -31,7 +34,17 @@ jobs:
           YBM_CLUSTER_ID: ${{ secrets.YBM_CLUSTER_ID }}
           YBM_ENDPOINT: ${{ secrets.YBM_ENDPOINT }}
           YBM_PROJECT_ID: ${{ secrets.YBM_PROJECT_ID }}
-      - name: Bump version and push tag
-        uses: hennejg/github-tag-action@v4.1.jh1
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Configure GIT
+        env:
+          CI_COMMIT_MESSAGE: Continuous Integration Build Artifacts
+          CI_COMMIT_AUTHOR: Continuous Integration
+        run: |
+          git config --global user.name "${{ env.CI_COMMIT_AUTHOR }}"
+          git config --global user.email "username@users.noreply.github.com"
+      - name: Tag
+        run: npm version patch --force --sign-git-tag
+      - name: Push
+        run: |
+          git show
+          git push
+          git push --tags
