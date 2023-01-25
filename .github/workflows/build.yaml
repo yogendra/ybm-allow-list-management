@@ -24,6 +24,12 @@ jobs:
       - run: npm ci
       - run: npm run build --if-present
       - run: npm test
+        env:
+          YBM_ENDPOINT: ${{ secrets.YBM_ENDPOINT }}
+          YBM_ACCOUNT_ID: ${{ secrets.YBM_ACCOUNT_ID }}
+          YBM_CLUSTER_ID: ${{ secrets.YBM_CLUSTER_ID }}
+          YBM_PROJECT_ID: ${{ secrets.YBM_PROJECT_ID }}
+          YBM_ALLOWLIST_PREFIX: ${{ secrets.YBM_ALLOWLIST_PREFIX }}
       - name: Bump version and push tag
         uses: hennejg/github-tag-action@v4.1.jh1
         with:
