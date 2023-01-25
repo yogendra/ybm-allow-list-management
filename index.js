@@ -1,4 +1,5 @@
-import { debug } from './logging.js'
+
+import { debug, sleep } from './util.js'
 import YBMClient from './ybm-client.js'
 
 const config = {
@@ -100,8 +101,12 @@ async function getAllowListByName (regex) {
 async function getClusterAllowListIds (id) {
   debug(`getClusterAllowListIds - Fetch allow list ids for cluster (${id})`)
   const path = `/clusters/${id}/allow-lists`
-  const allowList = await ybm.get(path)
-  return allowList.data.map(x => x.info.id).sort()
+  const response = await ybm.get(path)
+  if (response.error) {
+    console.warn(`Encountered error in get allow lists : ${response.status} -> ${response.details}`)
+    return null
+  }
+  return response.data.map(x => x.info.id).sort()
 }
 
 async function createAllowList (name, description, cidrOrIpList) {
@@ -128,44 +133,32 @@ async function createAllowList (name, description, cidrOrIpList) {
 async function updateClusterAllowLists (clusterId, allowListIds) {
   const path = `/clusters/${clusterId}/allow-lists`
   const param = allowListIds.sort()
-  const response = await ybm.put(path, param)
-  if (!(response && response.data && Array.isArray(response.data))) {
-    debug({ _tag: 'error', _method: 'updateClusterAllowLists', _msg: 'Updating cluster allow list ', ...response })
-    throw new Error(`Failed to update cluster (${clusterId}) with allow list (${allowListIds.join(',')})`)
-  }
-  let updatedAllowListIds = response.data.map(x => x.info.id).sort()
-  /*
-  Actual update take a few seconds to go through, so we need to check the response
-  for the current ids. And in case the ids are not upto date, we need to make
-  few tries (10) to check if the change succeeded.
-  There could be concurrent updates so, we just check if all the list ids we sent
-  are present in the cluster's allow list.
-  */
-  let updateComplete = param.every(v => updatedAllowListIds.includes(v))
-  if (updateComplete) {
-    return response
-  }
-  let retry = 1
-  while (retry <= config.postUpdateQueryRetry) {
-    sleep(1)
-    debug(`Retry count: ${retry} => Check for cluster allow list update`)
-    updatedAllowListIds = await getClusterAllowListIds(clusterId)
-    updateComplete = param.every(v => updatedAllowListIds.includes(v))
-    if (updateComplete) {
-      return response
+  let retry = 10
+
+  while (--retry > 0) {
+    const response = await ybm.put(path, param)
+    if (response.data) {
+      break
     }
-    ++retry
+    if (response.error != null) {
+      console.warn(`Encountered error in update : ${response.status} -> ${response.details}`)
+    }
+    sleep(1)
   }
-  debug({ _tag: 'error', _method: 'updateClusterAllowLists', _msg: 'updateClusterAllowLists', ...response })
-  throw new Error(`Update allow list (${param}) failed for cluster (${clusterId})`)
+  retry = config.postUpdateQueryRetry
+  while (--retry > 0) {
+    const ids = await getClusterAllowListIds(clusterId)
+    if (ids != null && allowListIds.every(x => ids.includes(x))) {
+      return ids
+    }
+    sleep(1)
+  }
+  debug({ _tag: 'error', _method: 'updateClusterAllowLists', _msg: 'updateClusterAllowLists' })
+  throw new Error(`Failed update:  cluster(${clusterId}), allow lists:(${param})`)
 }
 
 async function getAllowList (id) {
   const path = `/allow-lists/${id}`
   const response = await ybm.get(path, {})
   return response.data
-}
-
-async function sleep (seconds) {
-  return await new Promise((resolve, reject) => { setTimeout(resolve, seconds * 1000) })
 }
