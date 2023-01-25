@@ -3,17 +3,17 @@ on:
   release:
     types: [published]
 jobs:
-  publish-npmjs:
+  publish:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       # Setup .npmrc file to publish to npm
       - uses: actions/setup-node@v3
         with:
-          node-version: '19.x'
+          node-version: '18.x'
           registry-url: 'https://registry.npmjs.org'
       - run: npm ci
-      - run: npm pub --tag
+      - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
   publish-gh:
@@ -23,7 +23,7 @@ jobs:
       # Setup .npmrc file to publish to npm
       - uses: actions/setup-node@v3
         with:
-          node-version: '19.x'
+          node-version: '18.x'
           registry-url: 'https://npm.pkg.github.com'
       - run: npm ci
       - run: npm publish
