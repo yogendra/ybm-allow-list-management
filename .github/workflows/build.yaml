@@ -31,19 +31,3 @@ jobs:
           YBM_CLUSTER_ID: ${{ secrets.YBM_CLUSTER_ID }}
           YBM_ENDPOINT: ${{ secrets.YBM_ENDPOINT }}
           YBM_PROJECT_ID: ${{ secrets.YBM_PROJECT_ID }}
-      - name: Configure GIT
-        env:
-          CI_COMMIT_MESSAGE: Continuous Integration Build Artifacts
-          CI_COMMIT_AUTHOR: Continuous Integration
-        run: |
-          git config --global user.name "${{ env.CI_COMMIT_AUTHOR }}"
-          git config --global user.email "username@users.noreply.github.com"
-      - name: Tag
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm version patch
-      - name: Push
-        run: |
-          git show
-          git push
-          git push --tags
