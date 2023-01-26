@@ -42,10 +42,6 @@ jobs:
           YBM_ENDPOINT: ${{ secrets.YBM_ENDPOINT }}
           YBM_PROJECT_ID: ${{ secrets.YBM_PROJECT_ID }}
 
-      # Package
-      - name: Package
-        run: npm pack
-
       # Git config
       - name: Git configuration
         env:
@@ -96,6 +92,11 @@ jobs:
           path-to-changelog: CHANGELOG.md
           version: ${{ env.NEW_VERSION }}
           operation: read
+
+      # Package
+      - name: Package
+        run: npm pack
+
 
       # Update GitHub release with changelog
       - name: Update GitHub release documentation
