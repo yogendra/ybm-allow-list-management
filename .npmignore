@@ -1,4 +1,5 @@
-.env-private
+.env-private*
+
 private/
 node_modules/
 .direnv/
