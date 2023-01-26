@@ -40,19 +40,6 @@ jobs:
         run: |
           git config --global user.name "${{ env.CI_COMMIT_AUTHOR }}"
           git config --global user.email "yogendra@users.noreply.github.com"
-      - name: Debug
-        run: |
-          echo ${{github.event.inputs.release-type}}
-
-      # Bump package version
-      # Use tag latest
-      - name: Bump release version
-        if: startsWith(github.event.inputs.release-type, 'pre') != true
-        run: |
-          echo "NEW_VERSION=$(npm --no-git-tag-version version $RELEASE_TYPE)" >> $GITHUB_ENV
-          echo "RELEASE_TAG=latest" >> $GITHUB_ENV
-        env:
-          RELEASE_TYPE: ${{ github.event.inputs.release-type }}
 
       # Bump package version
       # Use tag latest
