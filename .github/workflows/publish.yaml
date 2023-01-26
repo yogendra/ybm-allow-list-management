@@ -85,7 +85,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
 
       - name: Setup Node.js - Github
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           registry-url: https://npm.pkg.github.com
           node-version: '18'
