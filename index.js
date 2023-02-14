@@ -1,4 +1,3 @@
-
 const YBMClient = require('./ybm-client.js')
 const { debug, sleep } = require('./util.js')
 
@@ -196,9 +195,7 @@ async function updateClusterAllowLists (clusterId, allowListIds) {
       break
     }
     if (response.error) {
-      console.warn(
-        'Encountered error in update :' + errorDetails(response)
-      )
+      console.warn('Encountered error in update :' + errorDetails(response))
     }
     await sleep(config.retryInterval)
   }
@@ -208,9 +205,7 @@ async function updateClusterAllowLists (clusterId, allowListIds) {
     if (ids && allowListIds.every((x) => ids.includes(x))) {
       return ids
     }
-    debug(
-      'Cluster allow list update not completed :' + ids.join(',')
-    )
+    debug('Cluster allow list update not completed :' + ids.join(','))
 
     await sleep(config.retryInterval)
   }
