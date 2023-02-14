@@ -1,5 +1,6 @@
-import { debug, sleep } from './util.js'
-import YBMClient from './ybm-client.js'
+
+const YBMClient = require('./ybm-client.js')
+const { debug, sleep } = require('./util.js')
 
 const config = {
   accountId: process.env.YBM_ACCOUNT_ID,
@@ -33,7 +34,7 @@ Update allow list association for each of the cluster associated with latest all
 3. add new allow list id
 
 */
-export async function update (prefix, cidrOrIpList, clusterId = null) {
+async function update (prefix, cidrOrIpList, clusterId = null) {
   const prefixRegex = new RegExp(`^${prefix}--v(\\d+)$`)
 
   let nextNumber = 1
@@ -207,7 +208,7 @@ async function updateClusterAllowLists (clusterId, allowListIds) {
     if (ids && allowListIds.every((x) => ids.includes(x))) {
       return ids
     }
-    console.warn(
+    debug(
       'Cluster allow list update not completed :' + ids.join(',')
     )
 
@@ -240,3 +241,5 @@ function errorDetails (res) {
     return JSON.stringify(res)
   }
 }
+
+module.exports = { update }
