@@ -6,7 +6,8 @@
   "main": "index.js",
   "scripts": {
     "debug-test": "NODE_OPTIONS='--inspect-brk' jest --runInBand ",
-    "test": "node index.test.js",
+    "test": "NODE_ENV=prod mocha",
+    "test-debug": "mocha",
     "analyse": "npx eslint './**/*.js'",
     "analyze": "npm run analyse",
     "pub": "npm version patch --force --sign-git-tag && npm publish --access public"
