@@ -1,6 +1,6 @@
-import { debug } from './util.js'
+const debug = require('./util').debug
 
-export default class YBMClient {
+class YBMClient {
   constructor (apiKey, accountId, projectId, endpoint) {
     const ep = endpoint || 'https://cloud.yugabyte.com/api'
     this.apiRoot = `${ep}/public/v1/accounts/${accountId}/projects/${projectId}`
@@ -68,3 +68,5 @@ export default class YBMClient {
     return this.request('DELETE', path, params, null, headers)
   }
 }
+
+module.exports = YBMClient
