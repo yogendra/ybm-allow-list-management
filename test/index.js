@@ -6,7 +6,6 @@
  */
 
 const { describe, before, after, it } = require('mocha')
-const should = require('chai').should()
 const { expect, assert } = require('chai')
 
 const update = require('../index').update
