@@ -113,7 +113,6 @@ jobs:
       # Publish version to public repository
       - name: Publish to NPM Registry
         run: |
-          npm login
           npm publish --access public --tag ${{ env.RELEASE_TAG }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
