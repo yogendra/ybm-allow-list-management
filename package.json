@@ -1,11 +1,12 @@
 {
   "name": "ybm-allow-list-management",
   "version": "1.0.31",
+  "type": "commonjs",
   "description": "Module to update Allow List on YugabyteDB Managed (SaaS) dynamicallynpm install --save-dev babel-jest",
   "main": "index.js",
   "scripts": {
-    "debug-test": "NODE_OPTIONS='--experimental-vm-modules --inspect-brk' jest --runInBand ",
-    "test": "NODE_OPTIONS=--experimental-vm-modules jest --runInBand",
+    "debug-test": "NODE_OPTIONS='--inspect-brk' jest --runInBand ",
+    "test": "node index.test.js",
     "analyse": "npx eslint './**/*.js'",
     "analyze": "npm run analyse",
     "pub": "npm version patch --force --sign-git-tag && npm publish --access public"
@@ -16,14 +17,15 @@
   },
   "license": "ISC",
   "devDependencies": {
+    "@babel/plugin-transform-modules-commonjs": "^7.20.11",
+    "chai": "^4.3.7",
     "eslint": "^8.32.0",
     "eslint-config-standard": "^17.0.0",
     "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-n": "^15.6.1",
     "eslint-plugin-promise": "^6.1.1",
-    "jest": "^29.3.1"
+    "mocha": "^10.2.0"
   },
-  "type": "module",
   "repository": {
     "type": "git",
     "url": "https://github.com/yogendra/ybm-allow-list-management.git"
